@@ -14,20 +14,35 @@ type Config struct {
 	InstanceName string
 }
 
+func (c *Config) Validate() error {
+	if c.UserName == "" {
+		return errors.New("UserName is not specified")
+	}
+
+	if c.Project == "" {
+		return errors.New("Project is not specified")
+	}
+
+	if c.Zone == "" {
+		return errors.New("Zone is not specified")
+	}
+	return nil
+}
+
 func GetConfigDirName() string {
-	return path.Join(".config", "hlb")
+	return path.Join(".config", "connect-to-gce-win")
 }
 
 func GetConfigFileName() string {
-	return ".hlb.yaml"
+	return ".connect-to-gce-win.yaml"
 }
 
 func GetConfigDirPath() (string, error) {
 	dir, err := homedir.Dir()
-	return path.Join(dir, GetConfigDirName()), errors.Wrap(err, "Error occurred in hlblib.GetConfigDirPath")
+	return path.Join(dir, GetConfigDirName()), errors.Wrap(err, "Error occurred in GetConfigDirPath")
 }
 
 func GetConfigFilePath() (string, error) {
 	configDirPath, err := GetConfigDirPath()
-	return path.Join(configDirPath, GetConfigFileName()), errors.Wrap(err, "Error occurred in hlblib.GetConfigFilePath")
+	return path.Join(configDirPath, GetConfigFileName()), errors.Wrap(err, "Error occurred in GetConfigFilePath")
 }

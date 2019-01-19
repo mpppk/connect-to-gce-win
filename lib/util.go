@@ -14,12 +14,7 @@ func GenerateRDPFile(filePath, ip, userName string) error {
 	return ioutil.WriteFile(filePath, []byte(contents), 0644)
 }
 
-func ChooseInstance(project string, zone string) (*compute.Instance, error) {
-	instances, err := listInstances(project, zone)
-	if err != nil {
-		return nil, errors.Wrap(err, "failed to list instances")
-	}
-
+func ChooseInstance(instances []*compute.Instance, project string, zone string) (*compute.Instance, error) {
 	if len(instances) <= 0 {
 		return nil, errors.New("no instances does found")
 	}
@@ -39,7 +34,7 @@ func ChooseInstance(project string, zone string) (*compute.Instance, error) {
 		Message: "Choose instance",
 		Options: instanceNames,
 	}
-	err = survey.AskOne(prompt, &chooseInstanceName, nil)
+	err := survey.AskOne(prompt, &chooseInstanceName, nil)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to choose instance")
 	}

@@ -22,12 +22,13 @@ var cfgFile string
 
 var rootCmd = &cobra.Command{
 	Use:   "connect-to-gce-win",
-	Short: "connect to windows on GCE via RDP",
+	Short: "connect to Windows on GCE via RDP",
 	//Long: ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		var config lib.Config
 		err := viper.Unmarshal(&config)
 		lib.PanicIfErrorExist(errors.Wrap(err, "failed to unmarshal config"))
+		lib.PanicIfErrorExist(config.Validate())
 
 		configDirPath, err := lib.GetConfigDirPath()
 		lib.PanicIfErrorExist(errors.Wrap(err, "failed to get config dir path"))
@@ -43,8 +44,10 @@ var rootCmd = &cobra.Command{
 			instance, err = service.GetInstance(config.InstanceName)
 			lib.PanicIfErrorExist(errors.Wrap(err, "failed to get instance"))
 		} else {
-			instance, err = lib.ChooseInstance(config.Project, config.Zone)
-			lib.PanicIfErrorExist(errors.Wrap(err, "failed to get instance"))
+			instances, err := service.ListInstances()
+			lib.PanicIfErrorExist(err)
+			instance, err = lib.ChooseInstance(instances, config.Project, config.Zone)
+			lib.PanicIfErrorExist(errors.Wrap(err, "failed to choose instance"))
 		}
 
 		fmt.Println("Trying to connect to " + instance.Name)
