@@ -28,62 +28,44 @@ var rootCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		var config lib.Config
 		err := viper.Unmarshal(&config)
-		if err != nil {
-			panic(errors.Wrap(err, "failed to unmarshal config"))
-		}
+		lib.PanicIfErrorExist(errors.Wrap(err, "failed to unmarshal config"))
 
 		configDirPath, err := lib.GetConfigDirPath()
-		if err != nil {
-			panic(errors.Wrap(err, "failed to get config dir path"))
-		}
+		lib.PanicIfErrorExist(errors.Wrap(err, "failed to get config dir path"))
+
 		rdpFilePath := filepath.Join(configDirPath, "connect-to-gce-win.rdp")
 
 		ctx := context.Background()
 		service, err := daisyCompute.NewClient(ctx)
+		lib.PanicIfErrorExist(errors.Wrap(err, "failed to create client of GCE"))
 
-		if err != nil {
-			panic(err)
-		}
 		instance, err := service.GetInstance(config.Project, config.Zone, config.InstanceName)
-
-		if err != nil {
-			panic(errors.Wrap(err, "failed to get instance"))
-		}
+		lib.PanicIfErrorExist(errors.Wrap(err, "failed to get instance"))
 
 		if instance.Status == "TERMINATED" {
 			fmt.Print("Starting instance")
 			err = service.StartInstance(config.Project, config.Zone, config.InstanceName)
-			if err != nil {
-				panic(errors.Wrap(err, "failed to start instance"))
-			}
+			lib.PanicIfErrorExist(errors.Wrap(err, "failed to start instance"))
 		}
 
 		instance, err = service.GetInstance(config.Project, config.Zone, config.InstanceName)
-
-		if err != nil {
-			panic(errors.Wrap(err, "failed to get instance"))
-		}
+		lib.PanicIfErrorExist(errors.Wrap(err, "failed to get instance"))
 
 		natIP, err := lib.ExtractNatIpFromInstance(instance)
-		if err != nil {
-			panic(errors.Wrap(err, "failed to get NAT IP"))
-		}
+		lib.PanicIfErrorExist(errors.Wrap(err, "failed to get NAT IP"))
 
-		err = lib.GenerateRDPFile(rdpFilePath, natIP, "niboshiporipori")
-		if err != nil {
-			panic(errors.Wrap(err, "failed to generate RDP file"))
-		}
+		err = lib.GenerateRDPFile(rdpFilePath, natIP, config.UserName)
+		lib.PanicIfErrorExist(errors.Wrap(err, "failed to generate RDP file"))
 
 		newPassword, err := password.ResetPassword(service, config.InstanceName, config.Zone, config.Project, config.UserName)
+		lib.PanicIfErrorExist(errors.Wrap(err, "failed to reset password"))
+
 		err = clipboard.WriteAll(newPassword)
-		if err != nil {
-			panic(errors.Wrap(err, "failed to copy password to clipboard"))
-		}
+		lib.PanicIfErrorExist(errors.Wrap(err, "failed to copy password to clipboard"))
 		fmt.Println("new password has been copied to clipboard")
+
 		err = open.Run(rdpFilePath)
-		if err != nil {
-			panic(errors.Wrap(err, "failed to open RDP file"))
-		}
+		lib.PanicIfErrorExist(errors.Wrap(err, "failed to open RDP file"))
 	},
 }
 

@@ -43,3 +43,9 @@ func GetConfigFilePath() (string, error) {
 	configDirPath, err := GetConfigDirPath()
 	return path.Join(configDirPath, GetConfigFileName()), errors.Wrap(err, "Error occurred in hlblib.GetConfigFilePath")
 }
+
+func PanicIfErrorExist(err error) {
+	if err != nil {
+		panic(err)
+	}
+}
