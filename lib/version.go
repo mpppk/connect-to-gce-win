@@ -6,7 +6,7 @@ import (
 	"github.com/rhysd/go-github-selfupdate/selfupdate"
 )
 
-const Version = "1.2.3"
+const Version = "0.0.1"
 const slug = "mpppk/connect-to-gce-win"
 
 func DoSelfUpdate() (bool, error) {
