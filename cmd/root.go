@@ -17,6 +17,7 @@ import (
 	daisyCompute "github.com/GoogleCloudPlatform/compute-image-tools/daisy/compute"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/api/compute/v1"
 )
 
 var cfgFile string
@@ -39,16 +40,24 @@ var rootCmd = &cobra.Command{
 		service, err := daisyCompute.NewClient(ctx)
 		lib.PanicIfErrorExist(errors.Wrap(err, "failed to create client of GCE"))
 
-		instance, err := service.GetInstance(config.Project, config.Zone, config.InstanceName)
-		lib.PanicIfErrorExist(errors.Wrap(err, "failed to get instance"))
+		var instance *compute.Instance
+		if config.InstanceName != "" {
+			instance, err = service.GetInstance(config.Project, config.Zone, config.InstanceName)
+			lib.PanicIfErrorExist(errors.Wrap(err, "failed to get instance"))
+		} else {
+			instance, err = lib.ChooseInstance(config.Project, config.Zone)
+			lib.PanicIfErrorExist(errors.Wrap(err, "failed to get instance"))
+		}
+
+		fmt.Println("Trying to connect to " + instance.Name)
 
 		if instance.Status == "TERMINATED" {
-			fmt.Print("Starting instance")
-			err = service.StartInstance(config.Project, config.Zone, config.InstanceName)
+			fmt.Println("Starting instance")
+			err = service.StartInstance(config.Project, config.Zone, instance.Name)
 			lib.PanicIfErrorExist(errors.Wrap(err, "failed to start instance"))
 		}
 
-		instance, err = service.GetInstance(config.Project, config.Zone, config.InstanceName)
+		instance, err = service.GetInstance(config.Project, config.Zone, instance.Name)
 		lib.PanicIfErrorExist(errors.Wrap(err, "failed to get instance"))
 
 		natIP, err := lib.ExtractNatIpFromInstance(instance)
@@ -57,12 +66,12 @@ var rootCmd = &cobra.Command{
 		err = lib.GenerateRDPFile(rdpFilePath, natIP, config.UserName)
 		lib.PanicIfErrorExist(errors.Wrap(err, "failed to generate RDP file"))
 
-		newPassword, err := password.ResetPassword(service, config.InstanceName, config.Zone, config.Project, config.UserName)
+		newPassword, err := password.ResetPassword(service, instance.Name, config.Zone, config.Project, config.UserName)
 		lib.PanicIfErrorExist(errors.Wrap(err, "failed to reset password"))
 
 		err = clipboard.WriteAll(newPassword)
 		lib.PanicIfErrorExist(errors.Wrap(err, "failed to copy password to clipboard"))
-		fmt.Println("new password has been copied to clipboard")
+		fmt.Println("New password has been copied to clipboard")
 
 		err = open.Run(rdpFilePath)
 		lib.PanicIfErrorExist(errors.Wrap(err, "failed to open RDP file"))
