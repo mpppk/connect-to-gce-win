@@ -6,15 +6,13 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/mpppk/connect-to-gce-win/gce"
 	"github.com/mpppk/connect-to-gce-win/lib"
-	"github.com/mpppk/hlb/hlblib"
 
 	"github.com/atotto/clipboard"
-	"github.com/mpppk/gce-auto-connect/password"
 	"github.com/pkg/errors"
 	"github.com/skratchdot/open-golang/open"
 
-	daisyCompute "github.com/GoogleCloudPlatform/compute-image-tools/daisy/compute"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/api/compute/v1"
@@ -37,12 +35,12 @@ var rootCmd = &cobra.Command{
 		rdpFilePath := filepath.Join(configDirPath, "connect-to-gce-win.rdp")
 
 		ctx := context.Background()
-		service, err := daisyCompute.NewClient(ctx)
+		service, err := gce.NewClient(ctx, config.Project, config.Zone)
 		lib.PanicIfErrorExist(errors.Wrap(err, "failed to create client of GCE"))
 
 		var instance *compute.Instance
 		if config.InstanceName != "" {
-			instance, err = service.GetInstance(config.Project, config.Zone, config.InstanceName)
+			instance, err = service.GetInstance(config.InstanceName)
 			lib.PanicIfErrorExist(errors.Wrap(err, "failed to get instance"))
 		} else {
 			instance, err = lib.ChooseInstance(config.Project, config.Zone)
@@ -53,20 +51,20 @@ var rootCmd = &cobra.Command{
 
 		if instance.Status == "TERMINATED" {
 			fmt.Println("Starting instance")
-			err = service.StartInstance(config.Project, config.Zone, instance.Name)
+			err = service.StartInstance(instance.Name)
 			lib.PanicIfErrorExist(errors.Wrap(err, "failed to start instance"))
 		}
 
-		instance, err = service.GetInstance(config.Project, config.Zone, instance.Name)
+		instance, err = service.GetInstance(instance.Name)
 		lib.PanicIfErrorExist(errors.Wrap(err, "failed to get instance"))
 
-		natIP, err := lib.ExtractNatIpFromInstance(instance)
+		natIP, err := gce.ExtractNatIpFromInstance(instance)
 		lib.PanicIfErrorExist(errors.Wrap(err, "failed to get NAT IP"))
 
 		err = lib.GenerateRDPFile(rdpFilePath, natIP, config.UserName)
 		lib.PanicIfErrorExist(errors.Wrap(err, "failed to generate RDP file"))
 
-		newPassword, err := password.ResetPassword(service, instance.Name, config.Zone, config.Project, config.UserName)
+		newPassword, err := service.ResetPassword(instance.Name, config.UserName)
 		lib.PanicIfErrorExist(errors.Wrap(err, "failed to reset password"))
 
 		err = clipboard.WriteAll(newPassword)
@@ -99,7 +97,7 @@ func initConfig() {
 		viper.SetConfigFile(cfgFile)
 	} else {
 		viper.SetConfigName(".connect-to-gce-win")
-		configFilePath, err := hlblib.GetConfigDirPath()
+		configFilePath, err := lib.GetConfigDirPath()
 		if err != nil {
 			fmt.Println(err)
 			os.Exit(1)
