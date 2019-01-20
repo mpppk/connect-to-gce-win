@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/mpppk/connect-to-gce-win/spinner"
+
 	"github.com/mpppk/connect-to-gce-win/gce"
 	"github.com/mpppk/connect-to-gce-win/lib"
 
@@ -50,10 +52,11 @@ var rootCmd = &cobra.Command{
 			lib.PanicIfErrorExist(errors.Wrap(err, "failed to choose instance"))
 		}
 
-		fmt.Println("Trying to connect to " + instance.Name)
+		spinner.SetDefaultSuffix(fmt.Sprintf(" - Trying to connect to [%s]", instance.Name))
+		spinner.SetCompleteMessage(fmt.Sprintf("✔  Connected to [%s]", instance.Name))
 
 		if instance.Status == "TERMINATED" {
-			fmt.Println("Starting instance")
+			spinner.DisplayStatus("Starting instance")
 			err = service.StartInstance(instance.Name)
 			lib.PanicIfErrorExist(errors.Wrap(err, "failed to start instance"))
 		}
@@ -72,10 +75,11 @@ var rootCmd = &cobra.Command{
 
 		err = clipboard.WriteAll(newPassword)
 		lib.PanicIfErrorExist(errors.Wrap(err, "failed to copy password to clipboard"))
-		fmt.Println("New password has been copied to clipboard")
 
 		err = open.Run(rdpFilePath)
 		lib.PanicIfErrorExist(errors.Wrap(err, "failed to open RDP file"))
+
+		spinner.CompleteStatus()
 	},
 }
 

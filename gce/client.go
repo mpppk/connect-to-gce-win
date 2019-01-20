@@ -3,11 +3,12 @@ package gce
 import (
 	"context"
 
+	"github.com/mpppk/connect-to-gce-win/lib"
+
 	"github.com/pkg/errors"
 	"golang.org/x/oauth2/google"
 
 	daisyCompute "github.com/GoogleCloudPlatform/compute-image-tools/daisy/compute"
-	"github.com/mpppk/gce-auto-connect/password"
 	compute "google.golang.org/api/compute/v1"
 )
 
@@ -27,7 +28,7 @@ func (c *Client) StartInstance(instanceName string) error {
 }
 
 func (c *Client) ResetPassword(instanceName, userName string) (string, error) {
-	return password.ResetPassword(c.daisyClient, instanceName, c.zone, c.project, userName)
+	return lib.ResetPassword(c.daisyClient, instanceName, c.zone, c.project, userName)
 }
 
 func (c *Client) ListInstances() ([]*compute.Instance, error) {

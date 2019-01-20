@@ -26,6 +26,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/mpppk/connect-to-gce-win/spinner"
+
 	daisyCompute "github.com/GoogleCloudPlatform/compute-image-tools/daisy/compute"
 	"google.golang.org/api/compute/v1"
 )
@@ -105,7 +107,7 @@ func ResetPassword(client daisyCompute.Client, instanceName, zone, project, user
 		return "", fmt.Errorf("error getting instance metadata: %v", err)
 	}
 
-	fmt.Println("Generating public/private key pair")
+	spinner.ChangeStatus("Generating public/private key pair")
 	key, err := rsa.GenerateKey(rand.Reader, 2048)
 	if err != nil {
 		return "", err
@@ -135,12 +137,13 @@ func ResetPassword(client daisyCompute.Client, instanceName, zone, project, user
 		md.Items = append(md.Items, &compute.MetadataItems{Key: "windows-keys", Value: &winKeys})
 	}
 
-	fmt.Println("Setting new 'windows-keys' metadata")
+	spinner.ChangeStatus("Setting new 'windows-keys' metadata")
 	if err := client.SetInstanceMetadata(project, zone, instanceName, md); err != nil {
 		return "", err
 	}
 
-	fmt.Println("Fetching encrypted password")
+	spinner.ChangeStatus("Fetching encrypted password")
+
 	var trys int
 	var ep string
 	for {
@@ -155,6 +158,9 @@ func ResetPassword(client daisyCompute.Client, instanceName, zone, project, user
 		trys++
 	}
 
-	fmt.Println("Decrypting password")
-	return decryptPassword(key, ep)
+	spinner.ChangeStatus("Decrypting password")
+
+	password, err := decryptPassword(key, ep)
+	spinner.CompleteStatus()
+	return password, err
 }
