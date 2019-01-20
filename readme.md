@@ -6,8 +6,8 @@
 Download from [GitHub Releases](https://github.com/mpppk/connect-to-gce-win/releases)
 
 ## Setup
-This setup assume GOOGLE_APPLICATION_CREDENTIALS environment variable is set correctly.
-(If you are not ready, see this tutorial)
+`connect-to-gce-win` requires that `GOOGLE_APPLICATION_CREDENTIALS` environment variable is set correctly.  
+(If you are not ready, see [this tutorial](https://cloud.google.com/docs/authentication/getting-started))
 
 Edit `~/.config/connect-to-gce-win/.connect-to-gce-win.yaml` as below.
 
@@ -26,7 +26,8 @@ project: sample-project
 zone: asia-northeast1-b
 ```
 
-Then, execute binary and your RDP Client will be started.
+Then, execute binary and your RDP Client will be started.  
+(example gif uses [Microsoft Remote Desktop Beta](https://rink.hockeyapp.net/apps/5e0c144289a51fca2d3bfa39ce7f2b06/), but you can use any clients)
 
 ```
 $ ./connect-to-gce-win
