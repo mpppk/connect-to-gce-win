@@ -1,6 +1,10 @@
 # Connect to GCE Win 
 [![CircleCI](https://circleci.com/gh/mpppk/connect-to-gce-win.svg?style=svg)](https://circleci.com/gh/mpppk/connect-to-gce-win)
 
+Tool for connect to Windows on Google Compute Engine via Remote Desktop
+
+![](https://raw.githubusercontent.com/wiki/mpppk/connect-to-gce-win/images/connect-to-gce-win2-compressor.gif)
+
 ## Installation
 
 Download from [GitHub Releases](https://github.com/mpppk/connect-to-gce-win/releases)
